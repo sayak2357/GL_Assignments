@@ -1,22 +1,25 @@
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+
+import javax.sound.midi.Soundbank;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MyHotelBookingApp {
     private static ArrayList<Booking> allBookings = new ArrayList<Booking>();
+    private static Hotel myHotel;
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Hi");
-        Hotel myHotel = initializeHotel();
+        System.out.println("Hi! Welcome to MyHotelBookingApp");
+        Hotel hotel = initializeHotel();
+        myHotel = hotel;
         while(true){
             System.out.print("1) Book Hotel\n2) Exit\nEnter your option: ");
             int choice = sc.nextInt();
             if(choice == 1){
                 Customer C = getCustomerInfo();
-                Booking B = getBooking(C,myHotel);
-                if(!B.status){
-                    System.out.println("Sorry! no rooms available");
-                }
-                else{
+                Booking B = getBooking(C);
+                if(B.status){
                     allBookings.add(B);
                 }
             }
@@ -25,26 +28,37 @@ public class MyHotelBookingApp {
             }
         }
     }
-    private static Booking getBooking(Customer C,Hotel H){
+    private static Booking getBooking(Customer C){
         int startDate,endDate, occupancy,acNonAc,floor;
-        String paymentMethod;
+        String paymentMethod, occupancyString;
         Scanner sc = new Scanner(System.in);
         System.out.println("Hi "+C.getName());
-        System.out.println("Enter dates between 1 and 30");
-        System.out.print("Enter start date: ");
-        startDate = sc.nextInt();
+        System.out.println("Enter dates between 1 and 30 for booking at MyHotel");
+        while (true) {
+            System.out.print("Enter start date: ");
+            startDate = sc.nextInt();
+            if(startDate>0 && startDate<30)
+                break;
+        }
         while(true) {
             System.out.print("Enter exit date: ");
             endDate = sc.nextInt();
-            if(endDate>startDate)
+            if(endDate>startDate && endDate<=30)
                 break;
         }
-        int duration = endDate - startDate+1;
+        int duration = endDate - startDate;
         while(true) {
             System.out.print("Enter occupancy (1/2/3): ");
             occupancy = sc.nextInt();
-            if(occupancy == 1 || occupancy == 2 || occupancy == 3)
+            if(occupancy == 1 || occupancy == 2 || occupancy == 3) {
+                if(occupancy == 1)
+                    occupancyString = "Single";
+                else if(occupancy == 2)
+                    occupancyString = "Double";
+                else
+                    occupancyString = "Triple";
                 break;
+            }
         }
         while(true) {
             System.out.print("Ac or non-AC (1 - AC, 0 - non-AC): ");
@@ -58,7 +72,7 @@ public class MyHotelBookingApp {
             if(floor ==1 || floor == 0 || floor == 2)
                 break;
         }
-        Room room = getSuitableRoom(startDate,endDate,occupancy,acNonAc,floor,H);
+        Room room = getSuitableRoom(startDate,endDate,occupancy,acNonAc,floor);
         if(room!=null){
             while(true){
                 System.out.println("total fair: "+getFair(room)*duration);
@@ -69,30 +83,32 @@ public class MyHotelBookingApp {
             }
             Payment p = new Payment(C,getFair(room), paymentMethod);
             System.out.println("You have successfully booked the room: "+room.getId());
-            if(occupancy == 1)
-                System.out.print("Single occupancy ");
-            else if(occupancy == 2)
-                System.out.print("Double occupancy ");
-            else
-                System.out.print("Triple occupancy ");
+            System.out.println(occupancyString+" occupancy ");
             if(acNonAc>0)
                 System.out.print("AC ");
             System.out.println(room.getFloor()+"th floor");
             return new Booking(C,startDate,endDate, room.getId(), p, true);
         }
         else{
+            if(acNonAc==0 && floor == 0)
+                System.out.println(occupancyString+" occupancy room not available");
+            else if(acNonAc>0 && floor == 0)
+                System.out.println(occupancyString+" occupancy AC room not available");
+            else if(acNonAc==0 && floor>0)
+                System.out.println(occupancyString+" occupancy room on "+floor+"th floor not available");
+            else
+                System.out.println(occupancyString+" occupancy AC room on "+floor+"th floor not available");
             return new Booking(C,startDate,endDate,"",new Payment(),false);
         }
     }
-    private static Room getSuitableRoom(int startDate, int endDate, int occupancy, int acNonAc,int floor, Hotel H){
-        Room[] allRooms = H.getRooms();
+    private static Room getSuitableRoom(int startDate, int endDate, int occupancy, int acNonAc,int floor){
+        Room[] allRooms = myHotel.getRooms();
         Scanner sc = new Scanner(System.in);
         for(Room r: allRooms){
             if(floor>0 && acNonAc>0) {
                 if (r.getOccupancy() == occupancy && r.getFloor() == floor && r.hasAc()){
                     String id = r.getId();
                     if(isBookingAvailable(startDate,endDate,id)){
-                        System.out.println("You need to pay: " + getFair(r));
                         return r;
                     }
                 }
@@ -101,7 +117,6 @@ public class MyHotelBookingApp {
                 if (r.getOccupancy() == occupancy && r.getFloor() == floor){
                     String id = r.getId();
                     if(isBookingAvailable(startDate,endDate,id)){
-                        System.out.println("You need to pay: " + getFair(r));
                         return r;
                     }
                 }
@@ -118,7 +133,6 @@ public class MyHotelBookingApp {
                 if (r.getOccupancy() == occupancy){
                     String id = r.getId();
                     if(isBookingAvailable(startDate,endDate,id)){
-                        System.out.println("You need to pay: " + getFair(r));
                         return r;
                     }
                 }
@@ -142,11 +156,11 @@ public class MyHotelBookingApp {
     }
     private static Customer getCustomerInfo(){
         Scanner sc = new Scanner(System.in);
-        System.out.print("your name: ");
+        System.out.print("#nter customer name: ");
         String name = sc.nextLine();
-        System.out.print("your adhaar number: ");
-        long adhaarNumber = sc.nextLong();
-        Customer C = new Customer(name,adhaarNumber);
+        System.out.print("Enter customer phone number: ");
+        long phoneNumber = sc.nextLong();
+        Customer C = new Customer(name,phoneNumber);
         return C;
     }
     private static Hotel initializeHotel(){
