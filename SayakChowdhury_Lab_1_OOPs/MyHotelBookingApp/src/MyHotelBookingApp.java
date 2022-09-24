@@ -14,7 +14,7 @@ public class MyHotelBookingApp {
         Hotel hotel = initializeHotel();
         myHotel = hotel;
         while(true){
-            System.out.print("1) Book Hotel\n2) Exit\nEnter your option: ");
+            System.out.print("1) Book a room at MyHotel\n2) Exit\nEnter your option: ");
             int choice = sc.nextInt();
             if(choice == 1){
                 Customer C = getCustomerInfo();
@@ -41,7 +41,7 @@ public class MyHotelBookingApp {
                 break;
         }
         while(true) {
-            System.out.print("Enter exit date: ");
+            System.out.print("Enter hotel exit date: ");
             endDate = sc.nextInt();
             if(endDate>startDate && endDate<=30)
                 break;
@@ -61,13 +61,13 @@ public class MyHotelBookingApp {
             }
         }
         while(true) {
-            System.out.print("Ac or non-AC (1 - AC, 0 - non-AC): ");
+            System.out.print("Enter Ac or non-AC (1 - AC, 0 - non-AC): ");
             acNonAc = sc.nextInt();
             if(acNonAc ==1 || acNonAc == 0)
                 break;
         }
         while(true) {
-            System.out.print("Floor preference (0 - no preference, 1 - First Floor, 2 - Second Floor): ");
+            System.out.print("Enter Floor preference (0 - no preference, 1 - First Floor, 2 - Second Floor): ");
             floor = sc.nextInt();
             if(floor ==1 || floor == 0 || floor == 2)
                 break;
@@ -75,29 +75,32 @@ public class MyHotelBookingApp {
         Room room = getSuitableRoom(startDate,endDate,occupancy,acNonAc,floor);
         if(room!=null){
             while(true){
-                System.out.println("total fair: "+getFair(room)*duration);
+                System.out.println("Room available. Total fair: Rs."+getFair(room)*duration + " with per day charge of Rs."+getFair(room));
                 System.out.println("enter payment method (cash/card): ");
                 paymentMethod = sc.next();
                 if(paymentMethod.equals("cash") || paymentMethod.equals("card"))
                     break;
             }
-            Payment p = new Payment(C,getFair(room), paymentMethod);
-            System.out.println("You have successfully booked the room: "+room.getId());
-            System.out.println(occupancyString+" occupancy ");
+            System.out.println("Your payment via "+paymentMethod+" is successful");
+            Payment p = new Payment(C,getFair(room)*duration, paymentMethod);
+            System.out.println("You have successfully booked the room: "+room.getId()+" from "+startDate+" to "+endDate+" which is ");
+            System.out.print(occupancyString+" occupancy ");
             if(acNonAc>0)
                 System.out.print("AC ");
+            else
+                System.out.print("Non AC ");
             System.out.println(room.getFloor()+"th floor");
             return new Booking(C,startDate,endDate, room.getId(), p, true);
         }
         else{
             if(acNonAc==0 && floor == 0)
-                System.out.println(occupancyString+" occupancy room not available");
+                System.out.println(occupancyString+" occupancy for a non AC room not available");
             else if(acNonAc>0 && floor == 0)
-                System.out.println(occupancyString+" occupancy AC room not available");
+                System.out.println(occupancyString+" occupancy for an AC room not available");
             else if(acNonAc==0 && floor>0)
-                System.out.println(occupancyString+" occupancy room on "+floor+"th floor not available");
+                System.out.println(occupancyString+" occupancy for a non AC room on "+floor+"th floor not available");
             else
-                System.out.println(occupancyString+" occupancy AC room on "+floor+"th floor not available");
+                System.out.println(occupancyString+" occupancy for an AC room on "+floor+"th floor not available");
             return new Booking(C,startDate,endDate,"",new Payment(),false);
         }
     }
@@ -114,7 +117,7 @@ public class MyHotelBookingApp {
                 }
             }
             else if(floor>0 && acNonAc==0) {
-                if (r.getOccupancy() == occupancy && r.getFloor() == floor){
+                if (r.getOccupancy() == occupancy && r.getFloor() == floor && !r.hasAc()){
                     String id = r.getId();
                     if(isBookingAvailable(startDate,endDate,id)){
                         return r;
@@ -130,7 +133,7 @@ public class MyHotelBookingApp {
                 }
             }
             else if(floor==0 && acNonAc==0) {
-                if (r.getOccupancy() == occupancy){
+                if (r.getOccupancy() == occupancy && !r.hasAc()){
                     String id = r.getId();
                     if(isBookingAvailable(startDate,endDate,id)){
                         return r;
