@@ -12,11 +12,13 @@ public class DriverClass {
             while(true) {
                 System.out.print("Enter the item number you wanna purchase: ");
                 n = sc.nextInt();
-                if(n>=1 && n<=5)
+                if(n>=1 && n<=6)
                     break;
                 else
                     System.out.println("Invalid Number!");
             }
+            if(n==6)
+                return;
             while(true) {
                 System.out.print("Enter the quantity you wanna purchase: ");
                 q = sc.nextInt();
@@ -26,6 +28,7 @@ public class DriverClass {
                     System.out.println("Invalid quantity!");
             }
             purchaseItem(n-1,q,VM,sc);
+            space();
         }
     }
     private static Item[] initItems(){
@@ -38,14 +41,16 @@ public class DriverClass {
         return items;
     }
     private static void showMenu(VendingMachine VM){
+        int i;
         Item[] items = VM.getItems();
         int[] itemCount = VM.getItemCount();
         System.out.println("The available menu of items, its price and number of that item available is as follows: ");
-        for(int i = 0;i<items.length; i++){
+        for(i = 0;i<items.length; i++){
             System.out.print((i+1)+") "+items[i].getName()+", ");
             System.out.print("price: "+items[i].getPrice()+", ");
             System.out.println("available quantity: "+itemCount[i]);
         }
+        System.out.println((i+1)+") Exit");
     }
     private static void purchaseItem(int index, int quantity, VendingMachine VM, Scanner sc){
         int[] itemCount = VM.getItemCount();
@@ -69,5 +74,9 @@ public class DriverClass {
             netPay = VM.getItems()[index].getPrice()*2*quantity;
         VM.purchaseItem(index,quantity);
         System.out.println("Please pay "+netPay+" and take the item.\nThank you for purchasing");
+    }
+    private static void space(){
+        for(int i=0;i<6;i++)
+            System.out.println();
     }
 }
